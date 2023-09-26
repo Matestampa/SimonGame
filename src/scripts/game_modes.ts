@@ -1,10 +1,45 @@
+//-------------------- importar utilities -----------------------
 import {Normal_sequenceGenerator,NextTo_sequenceGenerator} from "./sequences.js";
-import {sleep,Timeout_handler} from "./timers.js";
-import {SimonButton_handler,SimonButton_factory} from "./buttons_gen.js";
+import {SimonButton_handler,SimonButton_factory} from "./button_generators.js";
+import {sleep,Timeout_handler} from "./time_utils.js";
+
+//------------------- importar types ----------------------
+import type { SquareFactory as SquareFactory_type} from "./squares_generators.js";
+import type { SequenceGenerator as SequenceGenerator_type} from "./sequences.js";
+
+
+type onPress_retnType={
+    correctOption:(player_index:number)=>boolean,
+    passedRound:(player_index:number)=>boolean
+}
 
 //-------------------------------- PADRE -------------------------------------------------
-class GameMode{
-    constructor(squareFactory,on_nextround,on_finish,init_buttons){
+abstract class GameMode{
+    SquareFactory:SquareFactory_type;
+    on_nextround:()=>void;
+    on_finish:()=>void;
+    init_buttons:number;
+
+    //--------
+    level:number;
+    on_game:boolean;
+    in_round:boolean;
+    
+    finish_game:void
+    response_controller:Timeout_handler;
+
+    time_btw_round:number;
+    time_btw_sequence:number;
+    time_plyr_response:number;
+    
+    player_index:number //en q parte de la secuencia se encuentra el jugador
+    sequence:number[];
+    SequenceGenerator:SequenceGenerator_type;
+
+    ButtonFactory:SimonButton_factory;
+    ButtonHandler:SimonButton_handler;
+    
+    constructor(squareFactory,on_nextround,on_finish,init_buttons:number){
       this.SquareFactory=squareFactory; //ya lo pasamos construido;
       
       //definir callbacks pasados
@@ -28,6 +63,7 @@ class GameMode{
       this.sequence;
       this.SequenceGenerator=this.p__build_SequenceGenerator(); //ahi elegimos el que queramos
       
+
       //hacer el ButtonHandler
       this.init_buttons=init_buttons; //Personal para indicar cant inicial de botones
       this.press_button=this.press_button.bind(this); //hacemos bind al callback que le vamos a pasar a ButtonHandler
@@ -60,7 +96,7 @@ class GameMode{
         this.on_finish() //llamamos al callback pasado x el main
     }
 
-    async next_round(first_time){ //solo se pasa first_time cuando la llamamos x primera vez en start
+    async next_round(first_time?:boolean){ //solo se pasa first_time cuando la llamamos x primera vez en start
                                   //para que no se buguee el this.in_round en el main_loop().
         this.ButtonHandler.disable_buttons();
         
@@ -97,8 +133,8 @@ class GameMode{
         
     }
 
-    __build_buttons(cant){ //mete los butons al ButtonHandler
-        let buttonHandler=new SimonButton_handler(this.press_button,this);
+    __build_buttons(cant):SimonButton_handler{ //mete los butons al ButtonHandler
+        let buttonHandler=new SimonButton_handler(this.press_button);
         
         for (let i=0;i<cant;i++){
             let new_simonButton=this.__add_button(); //hacemos un simonButton
@@ -140,11 +176,11 @@ class GameMode{
     delete(){
         this.ButtonHandler.delete();
     }
+    
     //-------------------------------- INDIVIDUALES --------------------------------------------------
-
-    p__nextRound(){ //para definir o modificar lo que queramos cuando pase la ronda
-        return;
-    }
+    
+    abstract p__nextRound():void //para definir o modificar lo que queramos cuando pase la ronda
+        
 
     p__define_timeVars(){ //setear el valor que queramos a las variables de tiempo
        this.time_btw_round=1000;
@@ -152,17 +188,13 @@ class GameMode{
        this.time_plyr_response=3000;
     }
 
-    p__build_SequenceGenerator(){ //modificar las opciones como queramos, para pasarselas al Seq generator.
-      return;
-    }
+    abstract p__build_SequenceGenerator():SequenceGenerator_type //modificar las opciones como queramos, para pasarselas al Seq generator.
 
-    p__onPress(id){ //personalizar, cuando esta correcto el toque de boton
-      return;               //cuando se pasa de ronda.
-    }
 
-    p__finish(){
-        return;
-    }
+    abstract p__onPress(id):onPress_retnType //personalizar, cuando esta correcto el toque de boton
+                                             //y cuando se pasa de ronda.
+
+    abstract p__finish():void
 }
 
 //-------------------------------------- HIJOS ------------------------------------------------------
@@ -196,8 +228,8 @@ class Normal_gameMode extends GameMode{
         return;
     }
 
-    p__finish(){
-        return;
+    p__finish(): void {
+        return
     }
 }
 
@@ -205,6 +237,10 @@ class Normal_gameMode extends GameMode{
 //el correcto no es el que se muestra
 //sino su posicion dezplazada, 'x' cantidad de veces hacia la izquierda
 class NextTo_gameMode extends GameMode{ 
+    
+    alter_sequence:number[];
+    SequenceGenerator: NextTo_sequenceGenerator;
+
     constructor(squareFactory,on_nextround,on_finish,init_buttons=10){
         super(squareFactory,on_nextround,on_finish,init_buttons);
         this.alter_sequence;
@@ -241,10 +277,11 @@ class NextTo_gameMode extends GameMode{
     }
 }
 
-//------------------------------ EXPORTACION ---------------------------------------------
 
+//------------------------------ EXPORTACION ---------------------------------------------
 const GameModes={"normal":{"class":Normal_gameMode,"descr":"Presionar el boton que se encienda"},
                  "nextto":{"class":NextTo_gameMode,"descr":"Presionar el boton que este 3 lugares a la izquierda del encendido"}
                 };
 
 export {GameModes};
+export type {GameMode};

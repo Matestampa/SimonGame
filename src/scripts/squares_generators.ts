@@ -1,22 +1,39 @@
-function create_square(x,y,width,height,color){
-    let element=document.createElement("div");
+import type {rgb} from "./types"
+
+function create_square(x:number,y:number,width:number,height:number,color:rgb):HTMLDivElement{
+    let element=document.createElement("div") as HTMLDivElement;
+    
     element.style.position="absolute";
-    element.style.top=y;
-    element.style.left=x
-    element.style.width=width;
-    element.style.height=height;
+    element.style.top=String(y);
+    element.style.left=String(x)
+    element.style.width=String(width);
+    element.style.height=String(height);
     element.style.backgroundColor=color;
     element.style.borderRadius="20%";
+    
     return element;
 
 }
 
-class SquareFactory{
-    constructor(parent,x,y){
+
+abstract class SquareFactory{
+    parent:HTMLDivElement;
+    x:number;
+    y:number;
+    
+    coord_parity=0;
+    width=100;
+    height=100;
+    distance=120;
+    max_squares=16;
+    squares:HTMLDivElement[]=[];
+
+
+    constructor(parent:HTMLDivElement, x:number, y:number){
         this.parent=parent;
         this.x=x;
         this.y=y;
-        this.coord_parity=0; //para hacer lo de las coords
+        /*this.coord_parity=0; //para hacer lo de las coords
         
         this.width=100;
         this.height=100;
@@ -25,14 +42,14 @@ class SquareFactory{
         this.squares=[];
 
         //estas 2 se pueden cambiar con lo de abajo, pero x default van asi.
-        this.max_squares=16;
+        this.max_squares=16;*/
     }
     
     //---------------------------- general -------------------------------------
-    create(cant){ //siempre hsce return del creado, o creados en el momento
+    create(cant?:number){ //siempre hsce return del creado, o creados en el momento
         let new_square;
         if (!cant){ //si no se pasa nada, se crea uno solo
-            cant=this.default_squares;
+            //cant=this.default_squares;
             new_square=this.__add_one();
             this.squares.push(new_square);
             return new_square;
@@ -50,7 +67,7 @@ class SquareFactory{
     }
 
     
-    __add_one(){
+    private __add_one():HTMLDivElement{
         if (this.squares.length==this.max_squares){ //chequeamos que no se pase del maximo
             throw Error(`SquareGenerator maximum capacity (${this.max_squares}) exceded`);
         }
@@ -64,7 +81,7 @@ class SquareFactory{
         
     }
 
-    __update_coords(){ //configurado para armarlos tipo cuadrito
+    private __update_coords():void{ //configurado para armarlos tipo cuadrito
         if (this.coord_parity%2==0){
             this.y+=this.distance;
         }
@@ -81,28 +98,33 @@ class SquareFactory{
     /*#define_cantSquares(){ //definir(si se quiere) max_squares,default_squares
        return;
     }*/
-    p__define_color(){
-       return;
-    }
+    abstract p__define_color():rgb;
 }
 
 //-------------------------------------- HIJOS --------------------------------------------------
 
 class Clasic_squareFactory extends SquareFactory{ //Solo da normales
-    constructor(parent,x,y){
+    color_options:rgb[];
+    color_iterator:{next():rgb};
+    options_index:number;
+
+
+    constructor(parent:HTMLDivElement,x:number,y:number){
         super(parent,x,y);
         
         this.color_options=["rgb(10, 226, 118)","rgb(255, 115, 0)","rgb(221, 255, 0)","rgb(0, 115, 255)"]
         this.color_iterator=this.iterator(this.color_options);
         this.options_index=0;
 
+
     }
 
-    p__define_color(){
+    p__define_color():rgb{
+        console.log(this.color_options);
         return this.color_iterator.next(); //cuando se acaba, volvemos a empezar
     }
 
-    iterator(arr){ //hacemos un carrousel
+    private iterator(arr:rgb[]){ //hacemos un carrousel
         let index=0;
         return{ 
            next:function(){
@@ -116,15 +138,17 @@ class Clasic_squareFactory extends SquareFactory{ //Solo da normales
     }
 }
 
-const GEN_COLORS=["rgb(255, 0, 0)","rgb(0, 0, 255)","rgb(0, 255, 0)","rgb(0, 255, 255)","rgb(255, 51, 153)",
+
+//-----------------------------------------
+const GEN_COLORS:rgb[]=["rgb(255, 0, 0)","rgb(0, 0, 255)","rgb(0, 255, 0)","rgb(0, 255, 255)","rgb(255, 51, 153)",
                  "rgb(255, 255, 0)","rgb(255, 102, 0)","rgb(102, 0, 204)"]
 
 
-function str2arr(color){
+function str2arr(color:rgb):number[]{
     let indColor_str="";
     let colorArr=[];
     for (let i of color){
-        if (isNaN(i)==false){
+        if (isNaN(i as unknown as number)==false){
             indColor_str+=i;
         }
         if (i==","||i==")"){
@@ -135,22 +159,29 @@ function str2arr(color){
     return colorArr;
 }
 
-function getRandom(arr){
+function getRandom(arr:any[]):any{
     let index=Math.floor(Math.random()*arr.length);
     return arr[index];
 }
 
+
 class Similar_squareFactory extends SquareFactory{//Parecidos tipo gradiente
-      constructor(parent,x,y){
+    base_color:string;
+    base_colorArr:number[];
+    light_or_dark:0|1;
+    dark_factor:number;
+    light_factor:number;
+    
+    constructor(parent:HTMLDivElement,x:number,y:number){
         super(parent,x,y);
         this.base_color=getRandom(GEN_COLORS); //elegimos random de las opciones
-        this.base_colorArr=str2arr(this.base_color); //lo pasamos a Array
-        this.light_or_dark; //para elegir entre uno u otro [0,1]
+        this.base_colorArr=str2arr(this.base_color as rgb); //lo pasamos a Array
+        this.light_or_dark=0; //para elegir entre uno u otro [0,1]
         this.dark_factor=0; //factor para hacer dark
         this.light_factor=0; //factor para hacer light
       }
 
-      p__define_color(){ 
+      p__define_color():rgb{ 
         let colorArr;
         this.light_or_dark=getRandom([0,1]) //elegimos el coso random
         
@@ -160,21 +191,21 @@ class Similar_squareFactory extends SquareFactory{//Parecidos tipo gradiente
         if (this.light_or_dark==1){ //si salio light
             colorArr=this.__lighter();
         }
-        return `rgb(${colorArr})` //devolvemos en formaro rgb
+        return `rgb(${colorArr[0]},${colorArr[1]},${colorArr[2]})` //devolvemos en formaro rgb
       }
 
-      __darker(){
+      private __darker():number[]{
        let color=this.base_colorArr.map(color=>{ //les aplicamos uno x uno el factor
-        return parseInt(color * (1-this.dark_factor));
+        return Math.floor(color * (1-this.dark_factor));
        })
        
        this.dark_factor+=0.1; //cambiamos factor
        return color;
       }
 
-      __lighter(){
+      private __lighter():number[]{
        let color=this.base_colorArr.map(color=>{ //les aplicamos uno x uno el factor
-        return parseInt(color+ (255-color) * this.light_factor);
+        return Math.floor(color+ (255-color) * this.light_factor);
        })
        this.light_factor+=0.1 //cambiamos factor
        return color;
@@ -182,11 +213,11 @@ class Similar_squareFactory extends SquareFactory{//Parecidos tipo gradiente
 }
 
 class Random_squareFactory extends SquareFactory{ //Todos random
-    constructor(parent,x,y){
+    constructor(parent:HTMLDivElement,x:number,y:number){
         super(parent,x,y);
     }
 
-    p__define_color(){
+    p__define_color():rgb{
         return getRandom(GEN_COLORS);
     }
 }
@@ -199,3 +230,7 @@ const SquareFactories={"clasic":{"class":Clasic_squareFactory,"descr":"Los color
                       };
 
 export {SquareFactories};
+export type{SquareFactory};
+
+
+

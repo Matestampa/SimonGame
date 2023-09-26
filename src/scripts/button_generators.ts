@@ -1,7 +1,13 @@
-import {HtmlButton,CanvasButton,rgbStr_2_dark} from "./buttons_help.js";
+import {HtmlButton,rgbStr_2_dark} from "./button_utils.js";
+import type {rgb} from "./types";
 
 class Simon_button{
-    constructor(id,element,normal_color,dark_color){
+    id:number;
+    element:HtmlButton;
+    normal_color:rgb;
+    dark_color:rgb;
+
+    constructor(id:number,element:HtmlButton,normal_color:rgb,dark_color:rgb){
      this.id=id;
      this.element=element;
      this.normal_color=normal_color;
@@ -24,15 +30,20 @@ class Simon_button{
 //-------------------- Factory -----------------------------------------
 //Se encarga de crear Simon Buttons
 //Se le pasa al constrcutor el tipo de elemento(html o canvas), el cual va a tomar el SimonButton
-//Tambien se le pasa la opacidad, para poder generar las variantes del color
+//Tambien se le pasa la opacidad, que va a tomar el boton al ser presionado
 class SimonButton_factory{
-  constructor(type,opacity){
+    ButtonClass:typeof HtmlButton;
+    id:number;
+    type:any;
+    opacity:number;
+  constructor(type,opacity:number){
     this.ButtonClass=HtmlButton;
     this.id=0;
     this.type=type;
     this.opacity=opacity;
   }
-  create(element){
+  
+  create(element:HTMLDivElement){
     this.id+=1;
     let button=new this.ButtonClass(this.id,element);
     let normal_color=button.color;
@@ -46,14 +57,25 @@ class SimonButton_factory{
 //--------------------------Button Handler-------------------------------------
 
 class SimonButton_handler{
-  constructor(on_press){
+   buttons:{
+    [key:string]:Simon_button
+   };
+   on_press=(id:any):void=>{};
+
+   functions:{
+    [key:number]:()=>void;
+   }
+
+   h:(a:string)=>number;
+
+   constructor(on_press:(id:any)=>void){
     this.buttons={};
     
     this.on_press=on_press;
     this.functions={};
   }
 
-  add_button(key,button){ //añade un botton ya construido
+  add_button(key:number,button:Simon_button){ //añade un botton ya construido
     let on_press=this.on_press;
     this.buttons[key]=button;
     
@@ -64,7 +86,7 @@ class SimonButton_handler{
 
   }
 
-  activate(button_key){ //"hace el efecto de presion de boton"
+  activate(button_key:number){ //"hace el efecto de presion de boton"
     this.buttons[button_key].animate();
   }
 

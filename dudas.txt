@@ -1,0 +1,13 @@
+-Ver xq no nos deja pasar un callback tipo void a 
+
+-Como hacer para declarar cosas con el mismo nombre en distintos archivos
+
+-Hace falta volver a poner las cosas en el constructor, si ya se definieron arriba?
+ Onda agarra el "this" igual?
+
+
+
+
+ -TASKS:
+  
+

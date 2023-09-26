@@ -1,11 +1,14 @@
 //-------------------- Para manejar la cancelacion del timeOut -----------------------
 
 class Timeout_handler{
-    constructor(on_finish){
+    callback:any;
+    time_out:any;
+
+    constructor(on_finish:void){
         this.callback=on_finish;
         this.time_out;
     }
-    new_TimeOut(delay){
+    new_TimeOut(delay:number){
         this.time_out=setTimeout(this.callback,delay);
     }
 
@@ -14,8 +17,9 @@ class Timeout_handler{
     }
 }
 
+
 //---------------------Funcion sleep ---------------------------------
-function sleep(ms) {
+function sleep(ms:number):Promise<void>{
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 

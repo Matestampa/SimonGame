@@ -2,8 +2,12 @@
 //clase para hacer secuencia
 //Esta en particular no puede elegir el ultimo elegido
 //tiene un track de la secuencia y la devuelve toda
-class SequenceGenerator{
-    constructor(){ 
+abstract class SequenceGenerator{
+   options:number[];
+   curr_sequence:number[];
+   last_chosed:number;
+
+   constructor(){ 
      this.options=[];
      this.curr_sequence=[];
      this.last_chosed;
@@ -25,7 +29,7 @@ class SequenceGenerator{
      return this.curr_sequence;
     }
     
-    add_option(option){ //añade opcion al array de opciones
+    add_option(option:number){ //añade opcion al array de opciones
         this.options.push(option);
     }
 
@@ -34,12 +38,12 @@ class SequenceGenerator{
         this.last_chosed=undefined;
     }
     
-    __get_option(){
+    __get_option():number{
      let rand_index=Math.floor(Math.random()*this.options.length); //el coso random;
      return this.options[rand_index];
     }
 
-    p__generate(){
+    p__generate(option:number){
       return;
     }
     
@@ -58,7 +62,10 @@ class Normal_sequenceGenerator extends SequenceGenerator{
 //hace la normal, pero aparte hace una con la posicion dezplazada, 
 //ciertos lugares, hacia la izquierda
 class NextTo_sequenceGenerator extends SequenceGenerator{
-    constructor(displace){ //recibe dezplazamiento(hacia la izquierda)
+    alter_sequence:number[];
+    displace:number;
+    
+    constructor(displace:number){ //recibe dezplazamiento(hacia la izquierda)
                            //si es igual a la cantidad de buttons, va a quedar en el mismo lugar.
         super();
         this.alter_sequence=[];
@@ -66,7 +73,7 @@ class NextTo_sequenceGenerator extends SequenceGenerator{
     }
      
     //generamos la opcion dezplazada, teniendo en cuenta como se ven visualmente los botones
-    p__generate(option){
+    p__generate(option:number){
       let curr_index=this.options.indexOf(option);
       let future_index;
   
@@ -90,3 +97,4 @@ class NextTo_sequenceGenerator extends SequenceGenerator{
 }
 
 export {Normal_sequenceGenerator,NextTo_sequenceGenerator};
+export type {SequenceGenerator};
